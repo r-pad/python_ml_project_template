@@ -1,0 +1,5 @@
+lr: 1e-3
+batch_size: 64
+epochs: 100
+n_proc: 32
+check_val_every_n_epoch: 1

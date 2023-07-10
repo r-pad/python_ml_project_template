@@ -1,0 +1,10 @@
+name: flowbot
+data_dir: /home/yishu/datasets/partnet-mobility
+
+dataset: umpnet
+model: flowbot
+batch_size: 64
+lr: 1e-3
+mask_input_channel: True
+randomize_camera: True
+seed: 42

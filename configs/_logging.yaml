@@ -21,6 +21,7 @@ lightning:
 
 wandb:
   entity: r-pad
+  # entity: leisure-thu-cv
   project: python_ml_project_template
 
   # Group is for grouping runs together (i.e. a train run and an eval run).
