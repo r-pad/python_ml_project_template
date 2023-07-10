@@ -3,16 +3,17 @@ import json
 import hydra
 import lightning as L
 import omegaconf
+import rpad.pyg.nets.pointnet2 as pnp
 import torch
 import wandb
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 
 from python_ml_project_template.datasets.flowbot import FlowBotDataModule
+from python_ml_project_template.models.flow_predictor import FlowPredictorTrainingModule
 from python_ml_project_template.utils.script_utils import (
     PROJECT_ROOT,
     LogPredictionSamplesCallback,
-    create_model,
     match_fn,
 )
 
@@ -88,6 +89,10 @@ def main(cfg):
     #         p=ArtFlowNetParams(mask_input_channel=cfg.model.mask_input_channel),
     #         lr=cfg.training.lr,
     #     )
+    mask_channel = 1 if cfg.training.mask_input_channel else 0
+    network = pnp.PN2Dense(
+        in_channels=mask_channel, out_channels=3, p=pnp.PN2DenseParams()
+    )
 
     ######################################################################
     # Create the training module.
@@ -96,8 +101,7 @@ def main(cfg):
     # and the logging.
     ######################################################################
 
-    # model = ClassifierTrainingModule(network, training_cfg=cfg.training)
-    model = create_model("flowbot", cfg.training.lr, cfg.model.mask_input_channel)
+    model = FlowPredictorTrainingModule(network, training_cfg=cfg.training)
 
     ######################################################################
     # Set up logging in WandB.
@@ -121,16 +125,6 @@ def main(cfg):
         config=omegaconf.OmegaConf.to_container(
             cfg, resolve=True, throw_on_missing=True
         ),
-        # TODO: add config
-        # config={
-        #     "dataset": dataset,
-        #     "model": model_type,
-        #     "batch_size": batch_size,
-        #     "lr": lr,
-        #     "mask_input_channel": mask_input_channel,
-        #     "randomize_camera": randomize_camera,
-        #     "seed": seed,
-        # },
         job_type=cfg.job_type,
         save_code=True,  # This just has the main script.
         group=group,
