@@ -66,20 +66,14 @@ class LogPredictionSamplesCallback(Callback):
     def eval_log_random_sample(
         trainer: pl.Trainer,
         pl_module: LightningModuleWithPlots,
+        outputs,
         batch,
         prefix: Literal["train", "val", "unseen"],
     ):
-        # preds = outputs[np.random.randint(0, outputs.shape[0])]
-        data = batch[np.random.randint(0, len(batch))]
-        data = tgd.Batch.from_data_list([data]).to(pl_module.device)
-        with torch.no_grad():
-            pl_module.eval()
-            preds = pl_module(data)
-
-            if isinstance(preds, tuple):
-                preds = (pred.cpu() for pred in preds)
-            else:
-                preds = preds.cpu()
+        preds = outputs["preds"]
+        random_id = np.random.randint(0, len(batch))
+        preds = preds[random_id]
+        data = batch.get_example(random_id)
         plots = pl_module.make_plots(preds.cpu(), data.cpu())
 
         assert trainer.logger is not None and isinstance(trainer.logger, WandbLogger)
@@ -98,29 +92,9 @@ class LogPredictionSamplesCallback(Callback):
 
         # `outputs` comes from `LightningModule.validation_step`
         # which corresponds to our model predictions in this case
-
+        if batch_idx != 0:
+            return
+        dataloader_names = ["train", "val", "unseen"]
+        name = dataloader_names[dataloader_idx]
         if pl_module.current_epoch % self.eval_per_n_epoch == 0:
-            self.eval_log_random_sample(trainer, pl_module, batch, "val")
-
-    def on_test_batch_end(
-        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0
-    ):
-        """Called when the validation batch ends."""
-
-        # `outputs` comes from `LightningModule.validation_step`
-        # which corresponds to our model predictions in this case
-
-        if pl_module.current_epoch % self.eval_per_n_epoch == 0:
-            self.eval_log_random_sample(trainer, pl_module, batch, "unseen")
-
-    # def on_train_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"):  # type: ignore
-    #     if pl_module.current_epoch % self.eval_per_n_epoch == 0:
-    #         self.eval_log_random_sample(trainer, pl_module, self.train_dset, "train")
-
-    # def on_validation_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"):  # type: ignore
-    #     if pl_module.current_epoch % self.eval_per_n_epoch == 0:
-    #         self.eval_log_random_sample(trainer, pl_module, self.val_dset, "val")
-    #         if self.unseen_dset is not None:
-    #             self.eval_log_random_sample(
-    #                 trainer, pl_module, self.unseen_dset, "unseen"
-    #             )
+            self.eval_log_random_sample(trainer, pl_module, outputs, batch, name)

@@ -17,6 +17,7 @@ class FlowPredictorTrainingModule(L.LightningModule):
         super().__init__()
         self.network = network
         self.lr = training_cfg.lr
+        self.batch_size = training_cfg.batch_size
         self.mask_input_channel = training_cfg.mask_input_channel
 
     def forward(self, data) -> torch.Tensor:  # type: ignore
@@ -53,7 +54,7 @@ class FlowPredictorTrainingModule(L.LightningModule):
             batch_size=len(batch),
         )
 
-        return loss
+        return f_pred.reshape(len(batch), -1, 3), loss
 
     def configure_optimizers(self):
         optimizer = optim.AdamW(self.parameters(), lr=self.lr)
@@ -64,12 +65,15 @@ class FlowPredictorTrainingModule(L.LightningModule):
 
     def training_step(self, batch: tgd.Batch, batch_id):  # type: ignore
         self.train()
-        return self._step(batch, "train")
+        f_pred, loss = self._step(batch, "train")
+        return loss
 
     def validation_step(self, batch: tgd.Batch, batch_id, dataloader_idx=0):  # type: ignore
         self.eval()
-        name = "val" if dataloader_idx == 0 else "unseen"
-        return self._step(batch, name)
+        dataloader_names = ["train", "val", "unseen"]
+        name = dataloader_names[dataloader_idx]
+        f_pred, loss = self._step(batch, name)
+        return {"preds": f_pred, "loss": loss}
 
     @staticmethod
     def make_plots(preds, batch: tgd.Batch) -> Dict[str, go.Figure]:

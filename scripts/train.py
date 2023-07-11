@@ -81,16 +81,7 @@ def main(cfg):
 
     # Model architecture is dataset-dependent, so we have a helper
     # function to create the model (while separating out relevant vals).
-    # network = create_model(
-    #     image_size=cfg.dataset.image_size,
-    #     num_classes=cfg.dataset.num_classes,
-    #     model_cfg=cfg.model,
-    # )
-    # check mask_input_channel & learning_rate -> set them in config
-    # network = ArtFlowNet(
-    #         p=ArtFlowNetParams(mask_input_channel=cfg.model.mask_input_channel),
-    #         lr=cfg.training.lr,
-    #     )
+
     mask_channel = 1 if cfg.training.mask_input_channel else 0
     network = pnp.PN2Dense(
         in_channels=mask_channel, out_channels=3, p=pnp.PN2DenseParams()
@@ -198,7 +189,7 @@ def main(cfg):
     # Train the model.
     ######################################################################
 
-    trainer.fit(model, train_loader, [val_loader, unseen_loader])
+    trainer.fit(model, train_loader, [train_loader, val_loader, unseen_loader])
 
 
 if __name__ == "__main__":
