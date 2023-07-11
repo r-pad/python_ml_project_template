@@ -10,7 +10,7 @@ from rpad.partnet_mobility_utils.data import PMObject
 class FlowTrajectoryData(TypedDict):
     id: str
     pos: npt.NDArray[np.float32]  # (N, 3): Point cloud observation.
-    flow_trajectory: npt.NDArray[np.float32]  # (N, 3): Ground-truth flow.
+    flow: npt.NDArray[np.float32]  # (N, 3): Ground-truth flow.
     mask: npt.NDArray[np.bool_]  #  (N,): Mask the point of interest.
 
 
@@ -84,7 +84,7 @@ def compute_flow_trajectory(
     assert mode in ["delta", "point"]
     flow_trajectory = np.zeros((K, P_world.shape[0], 3))
     for step in range(K):
-        # compute the delta / waypoint & rotate ? and then calculate another
+        # compute the delta / waypoint & rotate and then calculate another
         P_world_new, current_jas, flow = compute_normalized_flow(
             P_world,
             T_world_base,
@@ -97,7 +97,7 @@ def compute_flow_trajectory(
         if mode == "delta":
             flow_trajectory[K, :, :] = P_world_new - P_world  # Save the delta
         if mode == "point":
-            flow_trajectory[K, :, :] = P_world_new  # Save the delta
+            flow_trajectory[K, :, :] = P_world_new  # Save the waypoints
         # Update pos
         P_world = P_world_new
     return flow_trajectory
@@ -134,6 +134,7 @@ class FlowTrajectoryDataset:
         self.n_points = n_points
 
     def get_data(self, obj_id: str, seed=None) -> FlowTrajectoryData:
+        print("inside flow_trajectory_dataset")
         # Select the camera.
         joints = "random" if self.randomize_joints else None
         camera_xyz = "random" if self.randomize_camera else None
@@ -158,7 +159,7 @@ class FlowTrajectoryDataset:
             pm_raw_data=self._dataset.pm_objs[obj_id],
             linknames="all",
         )
-
+        print("flow trajectory ", flow_trajectory.shape)
         # Compute the mask of any part which has flow.
         mask = (~(np.isclose(flow_trajectory, 0.0)).all(axis=-1)).astype(np.bool_)
 
@@ -166,13 +167,13 @@ class FlowTrajectoryDataset:
             rng = np.random.default_rng(seed2)
             ixs = rng.permutation(range(len(pos)))[: self.n_points]
             pos = pos[ixs]
-            flow_trajectory = flow_trajectory[ixs]
+            trajectory = flow_trajectory[ixs]
             mask = mask[ixs]
 
         return {
             "id": data["id"],
             "pos": pos,
-            "flow_trajectory": flow_trajectory,
+            "trajectory": trajectory,
             "mask": mask,
         }
 

@@ -20,7 +20,8 @@ lightning:
   checkpoint_dir: ${output_dir}/checkpoints
 
 wandb:
-  entity: r-pad
+  # entity: r-pad
+  entity: leisure-thu-cv
   project: open_anything_diffusion
 
   # Group is for grouping runs together (i.e. a train run and an eval run).

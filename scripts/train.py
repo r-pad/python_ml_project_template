@@ -10,7 +10,12 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 
 # from python_ml_project_template.datasets.flowbot import FlowBotDataModule
-from python_ml_project_template.models.flow_predictor import FlowPredictorTrainingModule
+from python_ml_project_template.datasets.flow_trajectory import FlowTrajectoryDataModule
+
+# from python_ml_project_template.models.flow_predictor import FlowPredictorTrainingModule
+from python_ml_project_template.models.flow_trajectory_predictor import (
+    FlowTrajectoryTrainingModule,
+)
 from python_ml_project_template.utils.script_utils import (
     PROJECT_ROOT,
     LogPredictionSamplesCallback,
@@ -51,7 +56,7 @@ def main(cfg):
     ######################################################################
 
     # Create FlowBot dataset
-    datamodule = FlowBotDataModule(
+    datamodule = FlowTrajectoryDataModule(
         root=cfg.dataset.data_dir,
         batch_size=cfg.training.batch_size,
         num_workers=cfg.resources.num_workers,
@@ -94,7 +99,7 @@ def main(cfg):
     # and the logging.
     ######################################################################
 
-    model = FlowPredictorTrainingModule(network, training_cfg=cfg.training)
+    model = FlowTrajectoryTrainingModule(network, training_cfg=cfg.training)
 
     ######################################################################
     # Set up logging in WandB.

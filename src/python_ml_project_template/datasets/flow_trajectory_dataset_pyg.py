@@ -4,12 +4,16 @@ import rpad.partnet_mobility_utils.dataset as pmd
 import torch
 import torch_geometric.data as tgd
 
+from python_ml_project_template.datasets.flow_trajectory_dataset import (
+    FlowTrajectoryDataset,
+)
+
 
 class FlowTrajectoryTGData(Protocol):
     id: str  # Object ID.
 
     pos: torch.Tensor  # Points in the point cloud.
-    flow: torch.Tensor  # instantaneous positive 3D flow.
+    trajectory: torch.Tensor  # instantaneous positive 3D flow.
     mask: torch.Tensor  # Mask of the part of interest.
 
 
@@ -25,8 +29,7 @@ class FlowTrajectoryPyGDataset(tgd.Dataset):
         n_points: Optional[int] = 1200,
     ) -> None:
         super().__init__()
-
-        self.dataset = Flowbot3DDataset(
+        self.dataset = FlowTrajectoryDataset(
             root,
             split,
             randomize_joints,
@@ -40,6 +43,7 @@ class FlowTrajectoryPyGDataset(tgd.Dataset):
         return len(self.dataset)
 
     def get(self, index) -> tgd.Data:
+        print("inside flow_trajectory_dataset_pyg get")
         return self.get_data(self.dataset._dataset._ids[index], seed=None)
 
     @staticmethod
@@ -48,13 +52,14 @@ class FlowTrajectoryPyGDataset(tgd.Dataset):
         camera_chunk = "rc" if randomize_camera else "sc"
         return f"processed_{joint_chunk}_{camera_chunk}"
 
-    def get_data(self, obj_id: str, seed=None) -> Flowbot3DTGData:
+    def get_data(self, obj_id: str, seed=None) -> FlowTrajectoryTGData:
+        print("inside flow_trajectory_dataset_pyg")
         data_dict = self.dataset.get_data(obj_id, seed)
 
         data = tgd.Data(
             id=data_dict["id"],
             pos=torch.from_numpy(data_dict["pos"]).float(),
-            flow=torch.from_numpy(data_dict["flow_trajectory"]).float(),
+            flow=torch.from_numpy(data_dict["trajectory"]).float(),
             mask=torch.from_numpy(data_dict["mask"]).float(),
         )
-        return cast(Flowbot3DTGData, data)
+        return cast(FlowTrajectoryTGData, data)
