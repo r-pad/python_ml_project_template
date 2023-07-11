@@ -13,7 +13,7 @@ class FlowTrajectoryTGData(Protocol):
     id: str  # Object ID.
 
     pos: torch.Tensor  # Points in the point cloud.
-    trajectory: torch.Tensor  # instantaneous positive 3D flow.
+    trajectory: torch.Tensor  # instantaneous positive 3D flow trajectories.
     mask: torch.Tensor  # Mask of the part of interest.
 
 
@@ -59,7 +59,7 @@ class FlowTrajectoryPyGDataset(tgd.Dataset):
         data = tgd.Data(
             id=data_dict["id"],
             pos=torch.from_numpy(data_dict["pos"]).float(),
-            flow=torch.from_numpy(data_dict["trajectory"]).float(),
+            trajectory=torch.from_numpy(data_dict["trajectory"]).float(),
             mask=torch.from_numpy(data_dict["mask"]).float(),
         )
         return cast(FlowTrajectoryTGData, data)
