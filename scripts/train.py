@@ -152,9 +152,7 @@ def main(cfg):
         callbacks=[
             # Callback which logs whatever visuals (i.e. dataset examples, preds, etc.) we want.
             LogPredictionSamplesCallback(
-                train_dset=datamodule.train_dset,
-                val_dset=datamodule.val_dset,
-                unseen_dset=datamodule.unseen_dset,
+                logger=logger,
                 eval_per_n_epoch=cfg.training.check_val_every_n_epoch,
             ),
             # This checkpoint callback saves the latest model during training, i.e. so we can resume if it crashes.

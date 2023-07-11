@@ -1,9 +1,10 @@
 import abc
 import os
 import pathlib
-from typing import Dict, List, Protocol, Sequence, Union, cast
+from typing import Dict, List, Literal, Protocol, Sequence, Union, cast
 
 import lightning.pytorch as pl
+import numpy as np
 import torch
 import torch.utils._pytree as pytree
 import torch_geometric.data as tgd
@@ -55,9 +56,40 @@ class LightningModuleWithPlots(pl.LightningModule, CanMakePlots):
     pass
 
 
+# TODO: Change
 class LogPredictionSamplesCallback(Callback):
-    def __init__(self, logger: WandbLogger):
+    def __init__(self, logger: WandbLogger, eval_per_n_epoch):
         self.logger = logger
+        self.eval_per_n_epoch = eval_per_n_epoch
+
+    @staticmethod
+    def eval_log_random_sample(
+        trainer: pl.Trainer,
+        pl_module: LightningModuleWithPlots,
+        batch,
+        prefix: Literal["train", "val", "unseen"],
+    ):
+        # preds = outputs[np.random.randint(0, outputs.shape[0])]
+        data = batch[np.random.randint(0, len(batch))]
+        data = tgd.Batch.from_data_list([data]).to(pl_module.device)
+        with torch.no_grad():
+            pl_module.eval()
+            preds = pl_module(data)
+
+            if isinstance(preds, tuple):
+                preds = (pred.cpu() for pred in preds)
+            else:
+                preds = preds.cpu()
+        plots = pl_module.make_plots(preds.cpu(), data.cpu())
+
+        assert trainer.logger is not None and isinstance(trainer.logger, WandbLogger)
+        trainer.logger.experiment.log(
+            {
+                **{f"{prefix}/{plot_name}": plot for plot_name, plot in plots.items()},
+                "global_step": trainer.global_step,
+            },
+            step=trainer.global_step,
+        )
 
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0
@@ -67,65 +99,19 @@ class LogPredictionSamplesCallback(Callback):
         # `outputs` comes from `LightningModule.validation_step`
         # which corresponds to our model predictions in this case
 
-        # Let's log 20 sample image predictions from the first batch
-        if batch_idx == 0:
-            n = 20
-            x, y = batch
-            images = [img for img in x[:n]]
-            outs = outputs["preds"][:n].argmax(dim=1)
-            captions = [
-                f"Ground Truth: {y_i} - Prediction: {y_pred}"
-                for y_i, y_pred in zip(y[:n], outs)
-            ]
+        if pl_module.current_epoch % self.eval_per_n_epoch == 0:
+            self.eval_log_random_sample(trainer, pl_module, batch, "val")
 
-            # Option 1: log images with `WandbLogger.log_image`
-            self.logger.log_image(key="sample_images", images=images, caption=captions)
+    def on_test_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0
+    ):
+        """Called when the validation batch ends."""
 
-            # Option 2: log images and predictions as a W&B Table
-            columns = ["image", "ground truth", "prediction"]
-            data = [
-                [wandb.Image(x_i), y_i, y_pred]
-                for x_i, y_i, y_pred in list(zip(x[:n], y[:n], outs))
-            ]
-            self.logger.log_table(key="sample_table", columns=columns, data=data)
+        # `outputs` comes from `LightningModule.validation_step`
+        # which corresponds to our model predictions in this case
 
-    # def __init__(
-    #     self, train_dset, val_dset, unseen_dset=None, eval_per_n_epoch: int = 1
-    # ):
-    #     self.train_dset = train_dset
-    #     self.val_dset = val_dset
-    #     self.unseen_dset = unseen_dset
-    #     self.eval_per_n_epoch = eval_per_n_epoch
-
-    # @staticmethod
-    # def eval_log_random_sample(
-    #     trainer: pl.Trainer,
-    #     pl_module: LightningModuleWithPlots,
-    #     dset,
-    #     prefix: Literal["train", "val", "unseen"],
-    # ):
-    #     data = dset[np.random.randint(0, len(dset))]
-    #     data = tgd.Batch.from_data_list([data]).to(pl_module.device)
-
-    #     with torch.no_grad():
-    #         pl_module.eval()
-    #         preds = pl_module(data)
-
-    #         if isinstance(preds, tuple):
-    #             preds = (pred.cpu() for pred in preds)
-    #         else:
-    #             preds = preds.cpu()
-
-    #     plots = pl_module.make_plots(preds, data.cpu())
-
-    #     assert trainer.logger is not None and isinstance(trainer.logger, WandbLogger)
-    #     trainer.logger.experiment.log(
-    #         {
-    #             **{f"{prefix}/{plot_name}": plot for plot_name, plot in plots.items()},
-    #             "global_step": trainer.global_step,
-    #         },
-    #         step=trainer.global_step,
-    #     )
+        if pl_module.current_epoch % self.eval_per_n_epoch == 0:
+            self.eval_log_random_sample(trainer, pl_module, batch, "unseen")
 
     # def on_train_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"):  # type: ignore
     #     if pl_module.current_epoch % self.eval_per_n_epoch == 0:
