@@ -3,5 +3,6 @@ batch_size: 64
 epochs: 100
 n_proc: 32
 check_val_every_n_epoch: 1
-mask_channel:
+trajectory_len: 5
+mode: "delta"
 mask_input_channel: True

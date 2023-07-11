@@ -9,7 +9,7 @@ import wandb
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 
-from python_ml_project_template.datasets.flowbot import FlowBotDataModule
+# from python_ml_project_template.datasets.flowbot import FlowBotDataModule
 from python_ml_project_template.models.flow_predictor import FlowPredictorTrainingModule
 from python_ml_project_template.utils.script_utils import (
     PROJECT_ROOT,
@@ -55,6 +55,8 @@ def main(cfg):
         root=cfg.dataset.data_dir,
         batch_size=cfg.training.batch_size,
         num_workers=cfg.resources.num_workers,
+        trajectory_len=cfg.training.trajectory_len,
+        mode=cfg.training.mode,
         n_proc=cfg.training.n_proc,  # Add n_proc
     )
     train_loader = datamodule.train_dataloader()
