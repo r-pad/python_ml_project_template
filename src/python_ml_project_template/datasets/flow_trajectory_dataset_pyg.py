@@ -43,7 +43,6 @@ class FlowTrajectoryPyGDataset(tgd.Dataset):
         return len(self.dataset)
 
     def get(self, index) -> tgd.Data:
-        print("inside flow_trajectory_dataset_pyg get")
         return self.get_data(self.dataset._dataset._ids[index], seed=None)
 
     @staticmethod
@@ -53,7 +52,6 @@ class FlowTrajectoryPyGDataset(tgd.Dataset):
         return f"processed_{joint_chunk}_{camera_chunk}"
 
     def get_data(self, obj_id: str, seed=None) -> FlowTrajectoryTGData:
-        print("inside flow_trajectory_dataset_pyg")
         data_dict = self.dataset.get_data(obj_id, seed)
 
         data = tgd.Data(

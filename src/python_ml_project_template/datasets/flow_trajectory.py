@@ -24,7 +24,6 @@ class FlowTrajectoryDataModule(L.LightningDataModule):
     ):
         super().__init__()
         self.batch_size = batch_size
-        print("inside FlowTrajectoryDataModule")
         self.train_dset = CachedByKeyDataset(
             dset_cls=FlowTrajectoryPyGDataset,
             dset_kwargs=dict(

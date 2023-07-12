@@ -1,3 +1,4 @@
+import copy
 from typing import Dict, List, Literal, Optional, Sequence, TypedDict, Union
 
 import numpy as np
@@ -46,6 +47,7 @@ def compute_normalized_flow(
         linknames = [joint.name for joint in joints]
 
     flow = np.zeros_like(P_world)
+    target_jas = copy.deepcopy(current_jas)
 
     for linkname in linknames:
         P_world_new = pma.articulate_joint(
@@ -58,7 +60,11 @@ def compute_normalized_flow(
             labelmap,
             T_world_base,
         )
-        current_jas[linkname] += 0.01  # Articulate the joint angles
+        # current_jas[linkname] += 0.01  # Articulate the joint angles
+        chain = pm_raw_data.obj.get_chain(linkname)
+        c_jas = [current_jas[joint.name] for joint in chain]
+        target_jas[pm_raw_data.obj.get_joint_by_child(linkname).name] += 0.01
+
         link_flow = P_world_new - P_world
         flow += link_flow
 
@@ -66,7 +72,7 @@ def compute_normalized_flow(
 
     normalized_flow = flow / (largest_mag + 1e-6)
 
-    return P_world_new, current_jas, normalized_flow
+    return P_world_new, target_jas, normalized_flow
 
 
 # Compute trajectories as K deltas / waypoints
@@ -95,12 +101,12 @@ def compute_flow_trajectory(
             linknames,
         )
         if mode == "delta":
-            flow_trajectory[K, :, :] = P_world_new - P_world  # Save the delta
+            flow_trajectory[step, :, :] = P_world_new - P_world  # Save the delta
         if mode == "point":
-            flow_trajectory[K, :, :] = P_world_new  # Save the waypoints
+            flow_trajectory[step, :, :] = P_world_new  # Save the waypoints
         # Update pos
         P_world = P_world_new
-    return flow_trajectory
+    return flow_trajectory.transpose(1, 0, 2)
 
 
 class FlowTrajectoryDataset:
@@ -134,7 +140,6 @@ class FlowTrajectoryDataset:
         self.n_points = n_points
 
     def get_data(self, obj_id: str, seed=None) -> FlowTrajectoryData:
-        print("inside flow_trajectory_dataset")
         # Select the camera.
         joints = "random" if self.randomize_joints else None
         camera_xyz = "random" if self.randomize_camera else None
@@ -159,15 +164,18 @@ class FlowTrajectoryDataset:
             pm_raw_data=self._dataset.pm_objs[obj_id],
             linknames="all",
         )
-        print("flow trajectory ", flow_trajectory.shape)
         # Compute the mask of any part which has flow.
-        mask = (~(np.isclose(flow_trajectory, 0.0)).all(axis=-1)).astype(np.bool_)
+        mask = (
+            ~(
+                np.isclose(flow_trajectory.reshape(flow_trajectory.shape[0], -1), 0.0)
+            ).all(axis=-1)
+        ).astype(np.bool_)
 
         if self.n_points:
             rng = np.random.default_rng(seed2)
             ixs = rng.permutation(range(len(pos)))[: self.n_points]
             pos = pos[ixs]
-            trajectory = flow_trajectory[ixs]
+            trajectory = flow_trajectory[ixs, :, :]
             mask = mask[ixs]
 
         return {
