@@ -52,18 +52,18 @@ pre-commit install
 To build the docker image, run:
 
 ```bash
-docker build -t python-ml-project-template .
+docker build -t <my_dockerhub_username>/python-ml-project-template .
 ```
 
-To run the training script, run:
+To run the training script locally, run:
 
 ```bash
 WANDB_API_KEY=<API_KEY>
 # Optional: mount current directory to run / test new code.
 # Mount data directory to access data.
 docker run \
-    -v $(pwd)/data:/root/data \
-    -v $(pwd)/logs:/root/logs \
+    -v $(pwd)/data:/opt/baeisner/data \
+    -v $(pwd)/logs:/opt/baeisner/logs \
     --gpus all \
     -e WANDB_API_KEY=$WANDB_API_KEY \
     -e WANDB_DOCKER_IMAGE=python-ml-project-template \
@@ -71,3 +71,13 @@ docker run \
         dataset.data_dir=/root/data \
         log_dir=/root/logs
 ```
+
+To push this:
+
+```bash
+docker push <my_dockerhub_username>/python-ml-project-template:latest
+```
+
+## Running on Clusters
+
+* [Autobot](autobot.md)
