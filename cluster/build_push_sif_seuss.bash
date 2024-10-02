@@ -27,7 +27,7 @@ docker build -t ${dockerhub_username}/${project_name}:${sanitized_branch_name}-s
 # Convert the docker image to a singularity image, and save it in the .singularity_images directory.
 mkdir -p ${root_dir}/.singularity_images
 sif_name=${root_dir}/.singularity_images/${project_name}_${sanitized_branch_name}-scratch.sif
-singularity build ${sif_name} docker-daemon://$dockerhub_username}/${project_name}:${sanitized_branch_name}-scratch
+singularity build ${sif_name} docker-daemon://${dockerhub_username}/${project_name}:${sanitized_branch_name}-scratch
 
 # Rsync the singularity image to the seuss cluster.
 rsync -avz --progress ${sif_name} ${scs_username}@seuss.ri.cmu.edu:/home/${scs_username}/singularity_images/
