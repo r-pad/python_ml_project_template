@@ -78,6 +78,16 @@ To push this:
 docker push <my_dockerhub_username>/python-ml-project-template:latest
 ```
 
+## Using the CI.
+
+Set up pushing to docker:
+
+Put the following secrets in the Github repository:
+* `DOCKERHUB_USERNAME`: Your Dockerhub username
+* `DOCKERHUB_TOKEN`: Your Dockerhub token
+
+You'll also need to Ctrl-F replace instances of beisner and baeisner with appropriate usernames.
+
 ## Running on Clusters
 
 * [Autobot](autobot.md)

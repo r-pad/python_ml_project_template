@@ -37,7 +37,7 @@ WORKDIR $CODING_ROOT/code
 COPY ./src $CODING_ROOT/code/src
 COPY ./setup.py $CODING_ROOT/code/setup.py
 COPY ./pyproject.toml $CODING_ROOT/code/pyproject.toml
-RUN pip install -e .
+RUN pip install -e .[develop]
 
 # Changes to the configs and scripts will not require a rebuild
 COPY ./configs $CODING_ROOT/code/configs
