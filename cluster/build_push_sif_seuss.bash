@@ -19,7 +19,7 @@ script_dir=$(dirname $script_path)
 root_dir=$(realpath ${script_dir}/..)
 
 # Compute a good tag for the image, which will be <dockerhub_username>/<project_name>:<branch-name>-scratch.
-sanitized_branch_name=`${script_dir}/sanitize_branch_name.bash`
+sanitized_branch_name=$(${script_dir}/sanitize_branch_name.bash)
 
 # Build the docker image.
 docker build -t ${dockerhub_username}/${project_name}:${sanitized_branch_name}-scratch .
