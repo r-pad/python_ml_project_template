@@ -5,16 +5,16 @@ FROM ubuntu:20.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install necessary dependencies
-RUN apt-get update && \
+RUN apt-get update &&
     apt-get install -y curl git build-essential libssl-dev zlib1g-dev libbz2-dev \
-    git \
-    libreadline-dev libsqlite3-dev wget llvm libncurses5-dev libncursesw5-dev \
-    xz-utils tk-dev libffi-dev liblzma-dev python-openssl && \
-    apt-get clean && \
+        git \
+        libreadline-dev libsqlite3-dev wget llvm libncurses5-dev libncursesw5-dev \
+        xz-utils tk-dev libffi-dev liblzma-dev python-openssl &&
+    apt-get clean &&
     rm -rf /var/lib/apt/lists/*
 
 # Install pyenv
-ENV CODING_ROOT="/opt/baeisner"
+ENV CODING_ROOT="/opt/rpad"
 
 WORKDIR $CODING_ROOT
 RUN git clone --depth=1 https://github.com/pyenv/pyenv.git .pyenv

@@ -46,7 +46,8 @@ SINGULARITYENV_WANDB_DOCKER_IMAGE=python-ml-project-template \
     SINGULARITYENV_WANDB_API_KEY=$WANDB_API_KEY \
     singularity exec \
     --nv \
-    --pwd /opt/$(whoami)/code \
+    -B $root_dir:/opt/rpad/code \
+    --pwd /opt/rpad/code \
     -B /scratch/$(whoami)/data:/opt/data \
     -B /scratch/$(whoami)/logs:/opt/logs \
     ${sif_name} \
