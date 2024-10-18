@@ -11,9 +11,10 @@ dependencies = [
   "lightning == 2.0.3",
   "omegaconf == 2.3.0",
   "pandas",
-  "torch == 2.0.1",        # CUDA 11.8
+  "ray[default] == 2.37.0",
+  "torch == 2.0.1",         # CUDA 11.8
   "torchmetrics",
-  "torchvision == 0.15.2", # CUDA 11.8
+  "torchvision == 0.15.2",  # CUDA 11.8
   "wandb == 0.15.4",
 ]
 
