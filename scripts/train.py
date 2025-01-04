@@ -11,10 +11,8 @@ from lightning.pytorch.loggers import WandbLogger
 from python_ml_project_template.datasets.cifar10 import CIFAR10DataModule
 from python_ml_project_template.models.classifier import ClassifierTrainingModule
 from python_ml_project_template.utils.script_utils import (
-    PROJECT_ROOT,
     LogPredictionSamplesCallback,
     create_model,
-    match_fn,
 )
 
 
@@ -157,22 +155,6 @@ def main(cfg):
                 save_weights_only=True,
             ),
         ],
-    )
-
-    ######################################################################
-    # Log the code to wandb.
-    # This is somewhat custom, you'll have to edit this to include whatever
-    # additional files you want, but basically it just logs all the files
-    # in the project root inside dirs, and with extensions.
-    ######################################################################
-
-    # Log the code used to train the model. Make sure not to log too much, because it will be too big.
-    wandb.run.log_code(
-        root=PROJECT_ROOT,
-        include_fn=match_fn(
-            dirs=["configs", "scripts", "src"],
-            extensions=[".py", ".yaml"],
-        ),
     )
 
     ######################################################################
