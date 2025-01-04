@@ -7,6 +7,7 @@ while getopts ":t:n:" opt; do
   case $opt in
     t) GPU_TYPE=$OPTARG ;;
     n) NUM_GPUS=$OPTARG ;;
+    e) CONDA_ENV=$OPTARG ;;
     \?) echo "Invalid option -$OPTARG" >&2; exit 1 ;;
   esac
 done
@@ -17,6 +18,7 @@ shift $((OPTIND-1))
 # Default values
 GPU_TYPE=${GPU_TYPE:-rtx3090}
 NUM_GPUS=${NUM_GPUS:-1}
+CONDA_ENV=${CONDA_ENV:-python_ml_project_template}
 
 OUTPUT=$(python -m rpad.core.autobot available ${GPU_TYPE} ${NUM_GPUS} --quiet --local)
 
@@ -31,6 +33,7 @@ fi
 NODE=${OUTPUT%%:*}
 GPU_INDICES=${OUTPUT#*:}
 COMMAND=$@
+CWD=$(pwd)
 
 # Print the results (optional)
 echo -e "######################################"
@@ -38,15 +41,17 @@ echo -e "Launching job:"
 echo -e "  Node:\t\t${NODE}"
 echo -e "  GPU type:\t${GPU_TYPE}"
 echo -e "  GPU indices:\t${GPU_INDICES}"
+echo -e "  Conda env:\t${CONDA_ENV}"
 echo -e "  Command:\t${COMMAND}"
+echo -e "  CWD:\t\t${CWD}"
 echo -e "######################################"
 
 # For some reason, the -c option causes an error "option requires an argument", but it still works.
 ssh -t ${NODE} bash -ic "
 # Setup env.
-cd ~/code/rpad/python_ml_project_template
-source ~/miniconda3/bin/activate
-conda activate python_ml_project_template
+cd $CWD
+
+conda activate $CONDA_ENV
 
 # Now, treat the rest of the command line arguments as the command to run.
 CUDA_VISIBLE_DEVICES=$GPU_INDICES $COMMAND
