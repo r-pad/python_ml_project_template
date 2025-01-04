@@ -18,8 +18,14 @@ shift $((OPTIND-1))
 GPU_TYPE=${GPU_TYPE:-rtx3090}
 NUM_GPUS=${NUM_GPUS:-1}
 
-
 OUTPUT=$(python -m rpad.core.autobot available ${GPU_TYPE} ${NUM_GPUS} --quiet --local)
+
+# If the lastr command failed, exit
+if [ $? -ne 0 ]; then
+    # Print the error message
+    echo -e "Error: ${OUTPUT}"
+    exit 1
+fi
 
 # Split the output on the colon
 NODE=${OUTPUT%%:*}
